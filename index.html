@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirHub® Voice</title>
+    <style>
+        #pdf-container {
+            width: 100%;
+            height: 80vh;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            page-break-after: always;
+        }
+        .active-slide {
+            display: block;
+        }
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="pdf-container"></div>
+    <div id="controls">
+        <button id="prev" onclick="goToPrevSlide()">Previous</button>
+        <button id="next" onclick="goToNextSlide()">Next</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        const pdfUrl = 'https://ghoti143.github.io/fricke_pitch/pitch.pdf';  // Replace with your PDF file URL
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 0;
+
+        // Render the PDF document
+        function renderPDF(url) {
+            pdfjsLib.getDocument(url).promise.then(function(pdf) {
+                pdfDoc = pdf;
+                totalPages = pdf.numPages;
+                renderPage(currentPage);
+            });
+        }
+
+        // Render a specific page from the PDF
+        function renderPage(pageNum) {
+            pdfDoc.getPage(pageNum).then(function(page) {
+                const scale = 1.5;
+                const viewport = page.getViewport({ scale });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                // Render the page onto the canvas
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                page.render(renderContext).promise.then(function() {
+                    const slide = document.createElement('div');
+                    slide.classList.add('slide');
+                    slide.classList.add('active-slide');
+                    slide.appendChild(canvas);
+                    document.getElementById('pdf-container').appendChild(slide);
+                });
+            });
+        }
+
+        // Go to the next slide
+        function goToNextSlide() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateSlide();
+            }
+        }
+
+        // Go to the previous slide
+        function goToPrevSlide() {
+            if (currentPage > 1) {
+                currentPage--;
+                updateSlide();
+            }
+        }
+
+        // Update the slide visibility
+        function updateSlide() {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.classList.remove('active-slide'));
+            slides[currentPage - 1].classList.add('active-slide');
+        }
+
+        // Initialize PDF.js
+        renderPDF(pdfUrl);
+    </script>
+</body>
+</html>
